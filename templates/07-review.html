@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Djinn Review — {{BRANCH}}</title>
+
+  <meta name="djinn-schema"       content="1">
+  <meta name="djinn-phase"        content="08">
+  <meta name="djinn-branch"       content="{{BRANCH}}">
+  <meta name="djinn-engineer"     content="{{ENGINEER}}">
+  <meta name="djinn-date"         content="{{DATE}}">
+  <meta name="djinn-approved"     content="false">
+  <meta name="djinn-approved-by"  content="">
+  <meta name="djinn-approved-at"  content="">
+  <meta name="djinn-tokens-in"    content="{{TOKENS_IN}}">
+  <meta name="djinn-tokens-out"   content="{{TOKENS_OUT}}">
+  <meta name="djinn-tokens-total" content="{{TOKENS_TOTAL}}">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f1117; --surface: #1a1d27; --border: #2a2d3a; --border-hi: #3d4158;
+      --text: #e2e5f0; --text-muted: #7a7f99; --text-dim: #4a4f6a;
+      --accent: #7c6af5; --accent-dim: #3d3680;
+      --green: #4ade80; --green-bg: #0d2818;
+      --amber: #fbbf24; --amber-bg: #1f1a0a;
+      --red: #f87171; --red-bg: #1f0d0d;
+      --blue: #60a5fa; --blue-bg: #0d1a2f;
+    }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; font-size: 14px; line-height: 1.6; }
+
+    /* top bars */
+    .file-bar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 10px 20px; display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--text-muted); position: sticky; top: 0; z-index: 100; }
+    .file-bar .path { color: var(--text); font-weight: 500; font-family: monospace; }
+    .file-bar .branch-name { color: var(--accent); font-family: monospace; }
+    .pill { padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; }
+    .pill-phase { background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent-dim); }
+    .spacer { flex: 1; }
+    .meta-row { padding: 10px 20px; display: flex; gap: 24px; font-size: 12px; color: var(--text-muted); border-bottom: 1px solid var(--border); background: var(--surface); flex-wrap: wrap; }
+    .meta-row span strong { color: var(--text); font-weight: 500; }
+
+    /* gate banner */
+    .gate-banner { background: var(--red-bg); border-bottom: 1px solid var(--red); padding: 10px 20px; display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--red); }
+    .gate-banner.approved { background: var(--green-bg); border-bottom-color: var(--green); color: var(--green); }
+    .gate-banner.blockers { background: var(--red-bg); border-bottom-color: var(--red); color: var(--red); }
+    .gate-icon { font-size: 16px; }
+
+    /* content */
+    .content { max-width: 900px; padding: 24px 20px; }
+    h2 { font-size: 15px; font-weight: 600; color: var(--text); margin: 20px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+    h3 { font-size: 13px; font-weight: 600; color: var(--accent); margin: 16px 0 8px; }
+    p { margin-bottom: 10px; color: var(--text-muted); }
+    .section-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 16px; }
+
+    /* verdict badge */
+    .verdict { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 700; margin: 0 0 20px; }
+    .verdict-approved { background: var(--green-bg); color: var(--green); border: 1px solid var(--green); }
+    .verdict-blockers { background: var(--red-bg); color: var(--red); border: 1px solid var(--red); }
+
+    /* plan adherence table */
+    .adherence-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 13px; }
+    .adherence-table th { text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-dim); border-bottom: 1px solid var(--border); }
+    .adherence-table td { padding: 7px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .adherence-table tr:last-child td { border-bottom: none; }
+    .adherence-table .file-path { font-family: monospace; font-size: 12px; color: var(--text); }
+    .adherence-table .status { font-size: 16px; }
+    .adherence-table .note { color: var(--text-muted); font-size: 12px; }
+
+    .checklist { list-style: none; padding: 0; margin: 8px 0 16px; }
+    .checklist li { display: flex; align-items: baseline; gap: 8px; padding: 4px 0; font-size: 13px; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+    .checklist li:last-child { border-bottom: none; }
+    .checklist .check-icon { font-size: 14px; flex-shrink: 0; }
+    .checklist .check-label { flex: 1; }
+
+    /* findings */
+    .finding { border: 1px solid var(--border); border-radius: 6px; margin-bottom: 10px; overflow: hidden; }
+    .finding-header { display: flex; align-items: center; gap: 10px; padding: 8px 14px; font-size: 12px; }
+    .finding.blocking .finding-header { background: var(--red-bg); border-bottom: 1px solid var(--red); }
+    .finding.suggestion .finding-header { background: var(--amber-bg); border-bottom: 1px solid var(--amber); }
+    .finding.question .finding-header { background: var(--blue-bg); border-bottom: 1px solid var(--blue); }
+    .finding.nit .finding-header { background: var(--surface); border-bottom: 1px solid var(--border); }
+    .finding-tag { font-weight: 700; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; padding: 1px 7px; border-radius: 3px; }
+    .finding.blocking .finding-tag { background: var(--red); color: #000; }
+    .finding.suggestion .finding-tag { background: var(--amber); color: #000; }
+    .finding.question .finding-tag { background: var(--blue); color: #000; }
+    .finding.nit .finding-tag { background: var(--border-hi); color: var(--text-muted); }
+    .finding-location { font-family: monospace; font-size: 11px; color: var(--text-muted); }
+    .finding-confidence { margin-left: auto; font-size: 11px; color: var(--text-dim); }
+    .finding-body { padding: 10px 14px; font-size: 13px; color: var(--text-muted); }
+    .finding-body strong { color: var(--text); font-weight: 600; }
+    :root { --border-hi: #3d4158; }
+
+    /* override section */
+    .override-section { background: var(--amber-bg); border: 1px solid var(--amber); border-radius: 6px; padding: 14px 16px; margin: 16px 0; }
+    .override-section h3 { color: var(--amber); margin-top: 0; }
+    .override-reason { font-size: 13px; color: var(--text-muted); font-style: italic; margin: 8px 0 0; }
+
+    /* approval zone */
+    .approve-zone { padding: 20px; border-top: 1px solid var(--border); display: flex; gap: 12px; align-items: center; }
+    .approve-btn { background: var(--green-bg); color: var(--green); border: 1px solid var(--green); padding: 8px 20px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600; }
+    .approve-btn:hover { background: var(--green); color: #000; }
+    .approve-note { font-size: 12px; color: var(--text-dim); }
+
+    /* token summary */
+    .token-summary { display: flex; gap: 24px; padding: 16px 20px; border-top: 1px solid var(--border); }
+    .token-col .token-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); margin-bottom: 4px; }
+    .token-col .token-value { font-weight: 600; font-size: 16px; font-family: monospace; }
+    .tv-in { color: var(--blue); } .tv-out { color: var(--green); } .tv-total { color: var(--amber); }
+  </style>
+</head>
+<body>
+
+<div class="file-bar">
+  <span class="path">.djinn/{{BRANCH}}/07-review.html</span>
+  <span>on</span>
+  <span class="branch-name">{{BRANCH}}</span>
+  <span class="pill pill-phase">Phase 08 — Review</span>
+  <span class="spacer"></span>
+</div>
+
+<div class="meta-row">
+  <span><strong>Engineer:</strong> {{ENGINEER}}</span>
+  <span><strong>Branch:</strong> {{BRANCH}}</span>
+  <span><strong>Date:</strong> {{DATE}}</span>
+  <span><strong>Phase:</strong> 08 / 10 — Adversarial Code Review</span>
+</div>
+
+<!-- Gate banner — agent sets class to "approved" or "blockers" and updates text -->
+<div class="gate-banner blockers" id="gate-banner">
+  <span class="gate-icon">⛔</span>
+  <strong>Hard gate</strong> — PR generation blocked until this artifact is approved.
+  Run <code>/djinn approve</code> after resolving all blocking findings (or document an override reason below).
+</div>
+
+<div class="content">
+  <div class="section-label">Phase 08 · Adversarial Code Review</div>
+
+  <!-- VERDICT: agent fills in "approved" or "blockers" class + text -->
+  <div class="verdict verdict-blockers" id="verdict">
+    <!-- e.g.: ⛔ BLOCKERS PRESENT — 2 blocking findings require resolution -->
+    <!-- or:   ✅ APPROVED — no blocking findings -->
+    {{VERDICT}}
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- SECTION 1 — PLAN ADHERENCE                         -->
+  <!-- ═══════════════════════════════════════════════════ -->
+
+  <h2>Section 1 — Plan Adherence</h2>
+
+  <h3>Files (Structure vs. diff)</h3>
+  <!-- Legend: ✅ in plan + changed  ⚠️ changed but not in plan  ❌ in plan but not changed -->
+  <table class="adherence-table">
+    <thead>
+      <tr>
+        <th style="width:36px"></th>
+        <th>File</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Agent fills rows. Example:
+      <tr>
+        <td class="status">✅</td>
+        <td class="file-path">src/billing/invoice.ex</td>
+        <td class="note">In plan, changed as expected</td>
+      </tr>
+      <tr>
+        <td class="status">⚠️</td>
+        <td class="file-path">src/orders/order.ex</td>
+        <td class="note">Changed but not named in plan (unplanned deviation)</td>
+      </tr>
+      <tr>
+        <td class="status">❌</td>
+        <td class="file-path">test/billing/invoice_test.exs</td>
+        <td class="note">Named in plan, not changed (missing)</td>
+      </tr>
+      -->
+      {{FILES_ADHERENCE_ROWS}}
+    </tbody>
+  </table>
+
+  <h3>Approach alignment</h3>
+  <p>{{APPROACH_ALIGNMENT}}</p>
+
+  <h3>Norms (N) compliance</h3>
+  <ul class="checklist">
+    <!-- Agent fills items. Example:
+    <li>
+      <span class="check-icon">✅</span>
+      <span class="check-label">All new functions have unit tests (plan Norms required ≥ 80% coverage)</span>
+    </li>
+    <li>
+      <span class="check-icon">❌</span>
+      <span class="check-label">Background job not idempotent — plan required idempotency for retry safety</span>
+    </li>
+    -->
+    {{NORMS_CHECKLIST}}
+  </ul>
+
+  <h3>Safeguards (S) present</h3>
+  <ul class="checklist">
+    <!-- Agent fills items. Same format as norms checklist. -->
+    {{SAFEGUARDS_CHECKLIST}}
+  </ul>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- SECTION 2 — FINDINGS                               -->
+  <!-- ═══════════════════════════════════════════════════ -->
+
+  <h2>Section 2 — Findings</h2>
+
+  <!-- Agent fills findings. Blocking findings first, then Suggestion, Question, Nit. -->
+  <!-- Each finding uses one of: blocking / suggestion / question / nit class -->
+
+  {{FINDINGS}}
+
+  <!-- Example finding structure:
+  <div class="finding blocking">
+    <div class="finding-header">
+      <span class="finding-tag">Blocking</span>
+      <span class="finding-location">src/billing/invoice_worker.ex:47–52</span>
+      <span class="finding-confidence">confidence: 91</span>
+    </div>
+    <div class="finding-body">
+      <strong>Missing idempotency guard.</strong> The background job inserts a row on
+      every execution without checking for an existing record. Under retry or duplicate
+      delivery this creates duplicates. The plan's Safeguards section explicitly required
+      idempotency for this worker.
+    </div>
+  </div>
+
+  <div class="finding suggestion">
+    <div class="finding-header">
+      <span class="finding-tag">Suggestion</span>
+      <span class="finding-location">src/billing/invoice.ex:120</span>
+      <span class="finding-confidence">confidence: 82</span>
+    </div>
+    <div class="finding-body">
+      <strong>Consider extracting to a shared helper.</strong>
+      This pattern (lines 118–124) duplicates logic in <code>src/payments/charge.ex:88</code>.
+      Project CLAUDE.md recommends extracting shared patterns — the plan's Norms section
+      called this out explicitly.
+    </div>
+  </div>
+  -->
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- OVERRIDE (filled only if blockers are approved     -->
+  <!-- despite outstanding findings)                      -->
+  <!-- ═══════════════════════════════════════════════════ -->
+
+  <div class="override-section" id="override-section" style="display:none">
+    <h3>Override — blocking findings approved with documented reason</h3>
+    <p class="override-reason" id="override-reason">{{OVERRIDE_REASON}}</p>
+  </div>
+
+</div>
+
+<div class="approve-zone">
+  <button class="approve-btn" onclick="navigator.clipboard.writeText('/djinn approve')">Copy approve command</button>
+  <span class="approve-note">Run <code>/djinn approve</code> in Claude Code after resolving all blocking findings (or after documenting an override reason above).</span>
+</div>
+
+<div class="token-summary">
+  <div class="token-col">
+    <div class="token-label">Tokens In</div>
+    <div class="token-value tv-in">{{TOKENS_IN}}</div>
+  </div>
+  <div class="token-col">
+    <div class="token-label">Tokens Out</div>
+    <div class="token-value tv-out">{{TOKENS_OUT}}</div>
+  </div>
+  <div class="token-col">
+    <div class="token-label">Branch Total</div>
+    <div class="token-value tv-total">{{TOKENS_TOTAL}}</div>
+  </div>
+</div>
+
+</body>
+</html>

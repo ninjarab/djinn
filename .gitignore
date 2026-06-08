@@ -1,0 +1,4 @@
+# Djinn artifact directories — these live on feature branches, not main
+# Only .archive/ persists on main (post-merge, via GitHub Action)
+.djinn/*/
+!.djinn/.archive/

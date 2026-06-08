@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Djinn Structure — {{BRANCH}}</title>
+
+  <meta name="djinn-schema"       content="1">
+  <meta name="djinn-phase"        content="04">
+  <meta name="djinn-branch"       content="{{BRANCH}}">
+  <meta name="djinn-engineer"     content="{{ENGINEER}}">
+  <meta name="djinn-date"         content="{{DATE}}">
+  <meta name="djinn-approved"     content="false">
+  <meta name="djinn-approved-by"  content="">
+  <meta name="djinn-approved-at"  content="">
+  <meta name="djinn-tokens-in"    content="{{TOKENS_IN}}">
+  <meta name="djinn-tokens-out"   content="{{TOKENS_OUT}}">
+  <meta name="djinn-tokens-total" content="{{TOKENS_TOTAL}}">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f1117; --surface: #1a1d27; --border: #2a2d3a; --border-hi: #3d4158;
+      --text: #e2e5f0; --text-muted: #7a7f99; --text-dim: #4a4f6a;
+      --accent: #7c6af5; --accent-dim: #3d3680;
+      --gate-bg: #2a1820; --gate-border: #7a2040; --gate-text: #f48090;
+      --green: #4ade80; --amber: #fbbf24; --blue: #60a5fa;
+    }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; font-size: 14px; line-height: 1.6; }
+    .file-bar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 10px 20px; display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--text-muted); position: sticky; top: 0; z-index: 100; }
+    .file-bar .path { color: var(--text); font-weight: 500; font-family: monospace; }
+    .file-bar .branch-name { color: var(--accent); font-family: monospace; }
+    .pill { padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; }
+    .pill-phase { background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent-dim); }
+    .pill-gate { background: var(--gate-bg); color: var(--gate-text); border: 1px solid var(--gate-border); }
+    .spacer { flex: 1; }
+    .meta-row { padding: 10px 20px; display: flex; gap: 24px; font-size: 12px; color: var(--text-muted); border-bottom: 1px solid var(--border); background: var(--surface); flex-wrap: wrap; }
+    .meta-row span strong { color: var(--text); font-weight: 500; }
+    .gate-banner { margin: 16px 20px; padding: 14px 18px; background: var(--gate-bg); border: 1px solid var(--gate-border); border-radius: 6px; color: var(--gate-text); font-size: 13px; display: flex; align-items: center; gap: 10px; }
+    .gate-banner code { background: rgba(255,255,255,0.07); padding: 1px 6px; border-radius: 3px; font-family: monospace; }
+    .tabs-wrapper { padding: 0 20px; }
+    .tab-nav { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-top: 8px; }
+    .tab-btn { background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-muted); cursor: pointer; font-size: 13px; font-weight: 500; padding: 8px 14px 9px; margin-bottom: -1px; }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-pane { display: none; padding: 20px 0; max-width: 860px; }
+    .tab-pane.active { display: block; }
+    h2 { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+    h3 { font-size: 13px; font-weight: 600; color: var(--accent); margin: 20px 0 10px; }
+    p { margin-bottom: 10px; }
+    ul, ol { padding-left: 20px; margin-bottom: 12px; }
+    li { margin-bottom: 5px; }
+    .section-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 16px; }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+    th { background: var(--surface); color: var(--text-muted); font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; padding: 8px 12px; text-align: left; border: 1px solid var(--border); }
+    td { padding: 8px 12px; border: 1px solid var(--border); vertical-align: top; }
+    pre { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 14px; overflow-x: auto; font-family: monospace; font-size: 12px; line-height: 1.6; margin: 10px 0; }
+    code { background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 3px; font-family: monospace; font-size: 12px; }
+    pre code { background: none; padding: 0; }
+    .step-list { list-style: none; padding: 0; }
+    .step-list li { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); align-items: flex-start; }
+    .step-list li:last-child { border-bottom: none; }
+    .step-num { background: var(--accent-dim); color: var(--accent); width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+    .step-body { flex: 1; }
+    .step-title { font-weight: 500; margin-bottom: 3px; }
+    .step-desc { color: var(--text-muted); font-size: 13px; }
+    .log-section { padding: 20px; border-top: 1px solid var(--border); }
+    .token-row { display: flex; gap: 24px; padding: 12px 0; font-size: 13px; }
+    .token-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); margin-bottom: 4px; }
+    .token-value { font-weight: 600; font-size: 16px; font-family: monospace; }
+    .tv-in { color: var(--blue); } .tv-out { color: var(--green); } .tv-total { color: var(--amber); }
+    .action-row { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; gap: 10px; align-items: center; }
+    .btn { padding: 8px 18px; border-radius: 5px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; }
+    .btn-approve { background: rgba(74,222,128,0.15); color: var(--green); border: 1px solid rgba(74,222,128,0.3); }
+    .btn-revise { background: var(--surface); color: var(--text-muted); border: 1px solid var(--border-hi); }
+    .action-hint { color: var(--text-dim); font-size: 12px; font-family: monospace; }
+  </style>
+</head>
+<body>
+
+<div class="file-bar">
+  <span class="path">.djinn/{{BRANCH}}/04-structure.html</span>
+  <span>on</span>
+  <span class="branch-name">{{BRANCH}}</span>
+  <span class="pill pill-phase">Phase 04 — Structure</span>
+  <span class="pill pill-gate">Awaiting Approval</span>
+  <span class="spacer"></span>
+</div>
+
+<div class="meta-row">
+  <span><strong>Engineer:</strong> {{ENGINEER}}</span>
+  <span><strong>Branch:</strong> {{BRANCH}}</span>
+  <span><strong>Date:</strong> {{DATE}}</span>
+  <span><strong>Phase:</strong> 04 / 08 — Structure (REASONS S, O)</span>
+</div>
+
+<div class="gate-banner">
+  <span>⛔</span>
+  <div>
+    <strong>Hard gate — implementation blocked until this is approved.</strong>
+    Review the structure carefully before approving. Run <code>/djinn approve</code> to unlock Phase 05 (Plan).
+  </div>
+</div>
+
+<div class="tabs-wrapper">
+  <nav class="tab-nav">
+    <button class="tab-btn active" onclick="showTab('str',this)">S — Structure</button>
+    <button class="tab-btn" onclick="showTab('ops',this)">O — Operations</button>
+    <button class="tab-btn" onclick="showTab('log',this)">Session Log</button>
+  </nav>
+
+  <div id="str" class="tab-pane active">
+    <div class="section-label">REASONS S</div>
+    <h2>Structure</h2>
+    {{STRUCTURE}}
+  </div>
+
+  <div id="ops" class="tab-pane">
+    <div class="section-label">REASONS O</div>
+    <h2>Operations</h2>
+    {{OPERATIONS}}
+  </div>
+
+  <div id="log" class="tab-pane">
+    <div class="section-label">Session Log</div>
+    <div class="token-row">
+      <div><div class="token-label">Tokens In</div><div class="token-value tv-in">{{TOKENS_IN}}</div></div>
+      <div><div class="token-label">Tokens Out</div><div class="token-value tv-out">{{TOKENS_OUT}}</div></div>
+      <div><div class="token-label">Branch Total</div><div class="token-value tv-total">{{TOKENS_TOTAL}}</div></div>
+    </div>
+    {{SESSION_LOG}}
+  </div>
+</div>
+
+<div class="action-row">
+  <button class="btn btn-approve">Approve Structure</button>
+  <button class="btn btn-revise">Request Revision</button>
+  <span class="action-hint">→ run /djinn approve or /djinn revise</span>
+</div>
+
+<script>
+  function showTab(id, btn) {
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    btn.classList.add('active');
+  }
+</script>
+</body>
+</html>

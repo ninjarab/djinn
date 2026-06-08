@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Djinn Implement Log — {{BRANCH}}</title>
+
+  <meta name="djinn-schema"       content="1">
+  <meta name="djinn-phase"        content="06">
+  <meta name="djinn-branch"       content="{{BRANCH}}">
+  <meta name="djinn-engineer"     content="{{ENGINEER}}">
+  <meta name="djinn-date"         content="{{DATE}}">
+  <meta name="djinn-approved"     content="false">
+  <meta name="djinn-approved-by"  content="">
+  <meta name="djinn-approved-at"  content="">
+  <meta name="djinn-tokens-in"    content="{{TOKENS_IN}}">
+  <meta name="djinn-tokens-out"   content="{{TOKENS_OUT}}">
+  <meta name="djinn-tokens-total" content="{{TOKENS_TOTAL}}">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f1117; --surface: #1a1d27; --border: #2a2d3a; --border-hi: #3d4158;
+      --text: #e2e5f0; --text-muted: #7a7f99; --text-dim: #4a4f6a;
+      --accent: #7c6af5; --accent-dim: #3d3680;
+      --green: #4ade80; --green-bg: #0d2818; --amber: #fbbf24; --blue: #60a5fa;
+      --red: #f87171;
+    }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; font-size: 14px; line-height: 1.6; }
+    .file-bar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 10px 20px; display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--text-muted); position: sticky; top: 0; z-index: 100; }
+    .file-bar .path { color: var(--text); font-weight: 500; font-family: monospace; }
+    .file-bar .branch-name { color: var(--accent); font-family: monospace; }
+    .pill { padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; }
+    .pill-phase { background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent-dim); }
+    .spacer { flex: 1; }
+    .meta-row { padding: 10px 20px; display: flex; gap: 24px; font-size: 12px; color: var(--text-muted); border-bottom: 1px solid var(--border); background: var(--surface); flex-wrap: wrap; }
+    .meta-row span strong { color: var(--text); font-weight: 500; }
+    .content { max-width: 900px; padding: 20px; }
+    h2 { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+    .section-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 12px; }
+    .log-entry { display: grid; grid-template-columns: 140px 100px 1fr; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); align-items: start; font-size: 13px; }
+    .log-time { color: var(--text-dim); font-family: monospace; font-size: 11px; }
+    .log-type { font-weight: 600; }
+    .log-type.write { color: var(--green); }
+    .log-type.decision { color: var(--amber); }
+    .log-type.deviation { color: var(--red); }
+    .log-type.force { color: var(--red); font-style: italic; }
+    .log-type.note { color: var(--blue); }
+    .log-desc { color: var(--text-muted); }
+    .log-desc code { background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 3px; font-family: monospace; font-size: 11px; }
+    .token-summary { display: flex; gap: 24px; padding: 16px 20px; border-top: 1px solid var(--border); margin-top: 8px; }
+    .token-col .token-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); margin-bottom: 4px; }
+    .token-col .token-value { font-weight: 600; font-size: 16px; font-family: monospace; }
+    .tv-in { color: var(--blue); } .tv-out { color: var(--green); } .tv-total { color: var(--amber); }
+  </style>
+</head>
+<body>
+
+<div class="file-bar">
+  <span class="path">.djinn/{{BRANCH}}/06-implement-log.html</span>
+  <span>on</span>
+  <span class="branch-name">{{BRANCH}}</span>
+  <span class="pill pill-phase">Phase 07 — Implement Log</span>
+  <span class="spacer"></span>
+</div>
+
+<div class="meta-row">
+  <span><strong>Engineer:</strong> {{ENGINEER}}</span>
+  <span><strong>Branch:</strong> {{BRANCH}}</span>
+  <span><strong>Session start:</strong> {{DATE}}</span>
+  <span><strong>Phase:</strong> 07 / 08 — Implement</span>
+</div>
+
+<div class="content">
+  <div class="section-label">Implementation Session Log</div>
+  <h2>Activity</h2>
+
+  <!-- Log entries are appended here during implementation.
+       Format: <div class="log-entry">
+                 <span class="log-time">HH:MM UTC</span>
+                 <span class="log-type write|decision|deviation|force|note">TYPE</span>
+                 <span class="log-desc">Description</span>
+               </div>
+  -->
+
+  {{LOG_ENTRIES}}
+
+</div>
+
+<div class="token-summary">
+  <div class="token-col">
+    <div class="token-label">Tokens In</div>
+    <div class="token-value tv-in">{{TOKENS_IN}}</div>
+  </div>
+  <div class="token-col">
+    <div class="token-label">Tokens Out</div>
+    <div class="token-value tv-out">{{TOKENS_OUT}}</div>
+  </div>
+  <div class="token-col">
+    <div class="token-label">Branch Total</div>
+    <div class="token-value tv-total">{{TOKENS_TOTAL}}</div>
+  </div>
+</div>
+
+</body>
+</html>

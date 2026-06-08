@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Djinn PR Summary — {{BRANCH}}</title>
+
+  <meta name="djinn-schema"       content="1">
+  <meta name="djinn-phase"        content="09">
+  <meta name="djinn-branch"       content="{{BRANCH}}">
+  <meta name="djinn-engineer"     content="{{ENGINEER}}">
+  <meta name="djinn-date"         content="{{DATE}}">
+  <meta name="djinn-approved"     content="false">
+  <meta name="djinn-approved-by"  content="">
+  <meta name="djinn-approved-at"  content="">
+  <meta name="djinn-tokens-in"    content="{{TOKENS_IN}}">
+  <meta name="djinn-tokens-out"   content="{{TOKENS_OUT}}">
+  <meta name="djinn-tokens-total" content="{{TOKENS_TOTAL}}">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f1117; --surface: #1a1d27; --border: #2a2d3a; --border-hi: #3d4158;
+      --text: #e2e5f0; --text-muted: #7a7f99; --text-dim: #4a4f6a;
+      --accent: #7c6af5; --accent-dim: #3d3680;
+      --green: #4ade80; --green-bg: #0d2818; --amber: #fbbf24; --blue: #60a5fa;
+    }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; font-size: 14px; line-height: 1.6; }
+    .file-bar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 10px 20px; display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--text-muted); position: sticky; top: 0; z-index: 100; }
+    .file-bar .path { color: var(--text); font-weight: 500; font-family: monospace; }
+    .file-bar .branch-name { color: var(--accent); font-family: monospace; }
+    .pill { padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; }
+    .pill-phase { background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent-dim); }
+    .spacer { flex: 1; }
+    .copy-btn { background: none; border: 1px solid var(--border-hi); color: var(--text-muted); padding: 3px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+    .copy-btn:hover { color: var(--text); border-color: var(--accent); }
+    .meta-row { padding: 10px 20px; display: flex; gap: 24px; font-size: 12px; color: var(--text-muted); border-bottom: 1px solid var(--border); background: var(--surface); flex-wrap: wrap; }
+    .meta-row span strong { color: var(--text); font-weight: 500; }
+    .content { max-width: 860px; padding: 24px 20px; }
+    h2 { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+    h3 { font-size: 13px; font-weight: 600; color: var(--accent); margin: 20px 0 10px; }
+    p { margin-bottom: 10px; }
+    ul, ol { padding-left: 20px; margin-bottom: 12px; }
+    li { margin-bottom: 5px; }
+    .section-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 16px; }
+    .pr-title-box { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 14px 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+    .pr-title { font-size: 15px; font-weight: 600; color: var(--text); flex: 1; }
+    pre { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 14px; overflow-x: auto; font-family: monospace; font-size: 12px; line-height: 1.6; margin: 10px 0; }
+    code { background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 3px; font-family: monospace; font-size: 12px; }
+    pre code { background: none; padding: 0; }
+    .checklist li { list-style: none; }
+    .checklist li::before { content: "☐ "; color: var(--text-muted); }
+    .artifact-links { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; }
+    .artifact-link { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+    .artifact-link .phase-tag { font-size: 11px; font-weight: 600; color: var(--accent); background: var(--accent-dim); padding: 1px 6px; border-radius: 3px; font-family: monospace; flex-shrink: 0; width: 30px; text-align: center; }
+    .artifact-link a { color: var(--blue); text-decoration: none; font-family: monospace; font-size: 12px; }
+    .artifact-link a:hover { text-decoration: underline; }
+    .token-row { display: flex; gap: 24px; padding: 12px 0; font-size: 13px; }
+    .token-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); margin-bottom: 4px; }
+    .token-value { font-weight: 600; font-size: 16px; font-family: monospace; }
+    .tv-in { color: var(--blue); } .tv-out { color: var(--green); } .tv-total { color: var(--amber); }
+    .log-section { padding: 20px; border-top: 1px solid var(--border); }
+  </style>
+</head>
+<body>
+
+<div class="file-bar">
+  <span class="path">.djinn/{{BRANCH}}/08-pr-summary.html</span>
+  <span>on</span>
+  <span class="branch-name">{{BRANCH}}</span>
+  <span class="pill pill-phase">Phase 09 — PR Summary</span>
+  <span class="spacer"></span>
+  <button class="copy-btn" onclick="copyPR()">Copy PR body</button>
+</div>
+
+<div class="meta-row">
+  <span><strong>Engineer:</strong> {{ENGINEER}}</span>
+  <span><strong>Branch:</strong> {{BRANCH}}</span>
+  <span><strong>Date:</strong> {{DATE}}</span>
+  <span><strong>Phase:</strong> 09 / 10 — PR Summary</span>
+</div>
+
+<div class="content">
+  <div class="section-label">Phase 09 · PR Summary</div>
+
+  <div class="pr-title-box">
+    <span class="pr-title" id="pr-title">{{PR_TITLE}}</span>
+    <button class="copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('pr-title').textContent)">Copy title</button>
+  </div>
+
+  <h3>What changed</h3>
+  {{WHAT_CHANGED}}
+
+  <h3>Why</h3>
+  {{WHY}}
+
+  <h3>How</h3>
+  {{HOW}}
+
+  <h3>Deviations from plan</h3>
+  {{DEVIATIONS}}
+
+  <h3>Test plan</h3>
+  <ul class="checklist">
+    {{TEST_PLAN}}
+  </ul>
+
+  <h3>Artifact trail</h3>
+  <div class="artifact-links">
+    <div class="artifact-link"><span class="phase-tag">01</span><a href="01-questions.html">01-questions.html</a> — Intent &amp; Assumptions</div>
+    <div class="artifact-link"><span class="phase-tag">02</span><a href="02-research.html">02-research.html</a> — Codebase Analysis</div>
+    <div class="artifact-link"><span class="phase-tag">03</span><a href="03-design.html">03-design.html</a> — Design (REASONS R, E, A)</div>
+    <div class="artifact-link"><span class="phase-tag">04</span><a href="04-structure.html">04-structure.html</a> — Structure (REASONS S, O)</div>
+    <div class="artifact-link"><span class="phase-tag">05</span><a href="05-plan.html">05-plan.html</a> — Full REASONS Canvas</div>
+    <div class="artifact-link"><span class="phase-tag">06</span><a href="06-implement-log.html">06-implement-log.html</a> — Implementation Log</div>
+    <div class="artifact-link"><span class="phase-tag">07</span><a href="07-review.html">07-review.html</a> — Adversarial Code Review</div>
+  </div>
+
+  <div id="pr-body-raw" style="display:none">{{PR_BODY_MARKDOWN}}</div>
+</div>
+
+<div class="log-section">
+  <div class="section-label">Token Usage — Full Branch</div>
+  <div class="token-row">
+    <div><div class="token-label">Tokens In</div><div class="token-value tv-in">{{TOKENS_IN}}</div></div>
+    <div><div class="token-label">Tokens Out</div><div class="token-value tv-out">{{TOKENS_OUT}}</div></div>
+    <div><div class="token-label">Branch Total</div><div class="token-value tv-total">{{TOKENS_TOTAL}}</div></div>
+  </div>
+</div>
+
+<script>
+  function copyPR() {
+    const raw = document.getElementById('pr-body-raw');
+    if (raw) navigator.clipboard.writeText(raw.textContent.trim());
+  }
+</script>
+</body>
+</html>

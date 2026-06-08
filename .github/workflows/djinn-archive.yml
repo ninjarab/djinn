@@ -1,0 +1,52 @@
+name: Djinn — Archive artifacts on merge
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  archive:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout default branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          # Fetch the merged branch too so we can copy its .djinn/ artifacts
+          fetch-depth: 0
+
+      - name: Copy .djinn/ artifacts from merged branch
+        env:
+          MERGED_BRANCH: ${{ github.event.pull_request.head.ref }}
+          MERGE_DATE: ${{ github.event.pull_request.merged_at }}
+        run: |
+          # Extract YYYY-MM-DD from the ISO timestamp
+          DATE=$(echo "$MERGE_DATE" | cut -c1-10)
+
+          SOURCE=".djinn/${MERGED_BRANCH}"
+          DEST=".djinn/.archive/${DATE}/${MERGED_BRANCH}"
+
+          # Check out the branch's .djinn/ directory from its last commit
+          if git ls-tree -d "origin/${MERGED_BRANCH}" -- ".djinn/${MERGED_BRANCH}" 2>/dev/null | grep -q .; then
+            git checkout "origin/${MERGED_BRANCH}" -- ".djinn/${MERGED_BRANCH}"
+            echo "Artifacts fetched from origin/${MERGED_BRANCH}"
+          else
+            echo "No .djinn/ artifacts found on ${MERGED_BRANCH} — skipping."
+            exit 0
+          fi
+
+          mkdir -p "$(dirname "$DEST")"
+          mv "$SOURCE" "$DEST"
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add ".djinn/.archive/${DATE}/"
+          git commit -m "chore(djinn): archive artifacts for ${MERGED_BRANCH} (merged ${DATE})"
+          git push
+
+          echo "Archived: ${SOURCE} → ${DEST}"
