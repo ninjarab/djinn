@@ -46,10 +46,14 @@ Check which files exist in `.djinn/<BRANCH>/`:
 ```
 Phase detection (evaluated top to bottom — first match wins):
 
+RETRO GATE:
+  08-pr-summary.html exists, 09-retro.html does not exist
+  → Run Phase 10 (Retro) before merging the PR.
+
 LOOP COMPLETE:
-  08-pr-summary.html exists
-  → The loop for this branch is complete. Run /djinn status to review artifacts.
-    To start a new loop, create a new branch. Run /djinn retro after merge.
+  09-retro.html exists
+  → The loop for this branch is complete. Merge the PR.
+    To start a new loop, create a new branch.
 
 AWAITING APPROVAL (gate phases — /djinn with no subcommand shows status):
   07-review.html exists, djinn-approved != "true"    → Phase 08 awaiting approval
@@ -102,8 +106,9 @@ To check approval status: read `.djinn/<BRANCH>/<file>` and check for
 
 **`/djinn retro`:**
 - Detect BRANCH as above.
-- Run Phase 10 (Retro) prompt regardless of loop state — this phase is
-  post-merge and triggered explicitly by the engineer.
+- Run Phase 10 (Retro) prompt. Run it BEFORE the PR merges — after Phase 09
+  has drafted the PR but before the engineer clicks merge — so that retro's
+  changes are committed on the feature branch and land in main with the PR.
 - Reads all committed artifacts for the branch (from `.djinn/<BRANCH>/` or
   `.djinn/.archive/` if archived post-merge).
 
@@ -523,21 +528,20 @@ After pushing, address reviewer comments as they arrive. Return to
 
 ### Phase 10 — Retro
 
-**Goal:** Post-merge retrospective. Reads all committed artifacts to assess
-loop effectiveness and propose improvements to Djinn's own phase prompts and
-templates. Self-improving — the loop gets better each cycle.
+**Goal:** Pre-merge retrospective. Reads all committed artifacts to assess
+loop effectiveness and propose improvements to phase prompts and templates.
+Self-improving — the loop gets better each cycle.
 
 **Autonomy:** Semi-auto. Agent proposes; engineer approves all changes via
 `AskUserQuestion` before anything is written.
 
-**Trigger:** `/djinn retro` (explicit, post-merge).
+**Trigger:** Runs automatically after Phase 09 (PR drafted), before the engineer merges.
 
 **Prompt:**
 
 You are running Phase 10 (Retro) of the Djinn loop for branch `<BRANCH>`.
 
-Read all artifacts in `.djinn/<BRANCH>/` (or `.djinn/.archive/` if archived).
-If artifacts are archived, the branch has merged — that is the normal case.
+Read all artifacts in `.djinn/<BRANCH>/`.
 
 **Section 1 — Loop Health**
 
@@ -590,12 +594,39 @@ After producing all four sections, present each proposal group via
 `AskUserQuestion` and wait for approval before making any change.
 
 On approval:
-- Phase prompt / template proposals → edit the relevant file in the djinn repo
-  directly (these are improvements to Djinn itself)
+- Phase prompt / template improvements and norms additions → write to
+  `.djinn/overrides.md` in the project repo (i.e. `$CLAUDE_PROJECT_DIR/.djinn/overrides.md`)
+  following the hygiene rules below.
+  Do NOT edit files inside the djinn repo — it is a shared base and changes
+  there will be overwritten on the next pull from GitHub.
 - Memory proposals → save to local memory
-- CLAUDE.md norms proposals → note them in the conversation for the engineer
-  to add to the project's CLAUDE.md
+
+### overrides.md hygiene rules
+
+The overrides file is organised into per-phase sections (e.g. `## Phase 05 Plan`,
+`## Phase 08 Review`). Before writing any approved proposal:
+
+1. **Read the entire `overrides.md` file.**
+2. **Check for an existing entry covering the same rule or norm** — same phase,
+   same subject. If one exists:
+   - Update it in place (sharpen the wording, add the new example, extend the
+     context). Do NOT add a duplicate entry.
+3. **If no existing entry covers it:**
+   - Find the section for the relevant phase (e.g. `## Phase 08 Review`).
+     Create the section if it doesn't exist yet.
+   - Append the new entry under that section.
+4. **Never append blindly** — always read first, deduplicate, then write.
 
 Read `templates/09-retro.html`, fill it with all four sections and the
 approved/declined status of each proposal, and write to
-`.djinn/<BRANCH>/09-retro.html` (or `.djinn/.archive/...` if already archived).
+`.djinn/<BRANCH>/09-retro.html`.
+
+Then auto-commit and push, staging both the retro artifact and the overrides file:
+
+```bash
+git add .djinn/<BRANCH>/ .djinn/overrides.md
+git commit -m "chore(djinn): retro complete — <BRANCH>"
+git push
+```
+
+Remind the engineer: "Retro complete. Review the PR and merge when ready."
