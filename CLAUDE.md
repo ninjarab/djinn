@@ -39,9 +39,25 @@ git branch --show-current
 Store the result as `BRANCH`. If the branch is empty (detached HEAD), stop and
 say: "Djinn requires a named branch. Create one with `git checkout -b <name>`."
 
+Derive the artifact directory `ARTIFACT_DIR` as follows:
+
+1. **DATE** — today's date in `YYYY-MM-DD` format (UTC).
+2. **SLUG** — extract a ticket ID from `BRANCH` by matching the pattern
+   `[A-Za-z]+-[0-9]+` (e.g. `tra-4556` from `mehdibeddiaf/tra-4556-reduce-...`).
+   If no ticket ID is found, sanitize the branch name: strip any `username/`
+   prefix, then replace all remaining `/` and non-alphanumeric characters with
+   `-`, and truncate to 40 characters.
+3. `ARTIFACT_DIR = .djinn/<DATE>/<SLUG>/`
+
+**Important:** On subsequent `/djinn` calls on the same branch, the date must
+stay fixed to when Phase 01 was first run — not today's date. Detect the
+existing directory by searching `.djinn/` for a folder matching `*/<SLUG>/`.
+If found, use that path as `ARTIFACT_DIR`. Only compute a new `DATE` when no
+existing directory is found (i.e. Phase 01 hasn't run yet).
+
 ### 2. Detect current phase
 
-Check which files exist in `.djinn/<BRANCH>/`:
+Check which files exist in `<ARTIFACT_DIR>`:
 
 ```
 Phase detection (evaluated top to bottom — first match wins):
@@ -62,7 +78,7 @@ AWAITING APPROVAL (gate phases — /djinn with no subcommand shows status):
   03-design.html exists, djinn-approved != "true"    → Phase 03 awaiting approval
 
 NEXT PHASE TO RUN:
-  no .djinn/<BRANCH>/ directory                       → Phase 01 (Questions)
+  no <ARTIFACT_DIR> directory                          → Phase 01 (Questions)
   01-questions.html exists, no 02-research.html       → Phase 02 (Research)
   02-research.html exists, no 03-design.html          → Phase 03 (Design)
   03-design.html approved, no 04-structure.html       → Phase 04 (Structure)
@@ -72,7 +88,7 @@ NEXT PHASE TO RUN:
   07-review.html approved, no 08-pr-summary.html      → Phase 09 (PR)
 ```
 
-To check approval status: read `.djinn/<BRANCH>/<file>` and check for
+To check approval status: read `<ARTIFACT_DIR>/<file>` and check for
 `<meta name="djinn-approved" content="true">`.
 
 ### 3. Handle subcommands
@@ -83,7 +99,7 @@ To check approval status: read `.djinn/<BRANCH>/<file>` and check for
 
 **`/djinn approve`:**
 - Detect the current gate phase (the highest-numbered unapproved gate artifact)
-- Read `.djinn/<BRANCH>/<gate-artifact>.html`
+- Read `<ARTIFACT_DIR>/<gate-artifact>.html`
 - Add the three approval meta tags immediately after the existing `djinn-date` meta tag:
   ```html
   <meta name="djinn-approved"     content="true">
@@ -98,7 +114,7 @@ To check approval status: read `.djinn/<BRANCH>/<file>` and check for
 - Confirm: "Approved phase NN for branch <BRANCH>. Run /djinn to continue."
 
 **`/djinn revise`:**
-- Detect the current artifact (highest-numbered phase file in `.djinn/<BRANCH>/`)
+- Detect the current artifact (highest-numbered phase file in `<ARTIFACT_DIR>`)
 - Rename it with a `-v2` suffix (e.g. `03-design.html` → `03-design-v2.html`),
   or `-v3` if `-v2` already exists, and so on.
 - Re-run the current phase prompt from scratch.
@@ -109,7 +125,7 @@ To check approval status: read `.djinn/<BRANCH>/<file>` and check for
 - Run Phase 10 (Retro) prompt. Run it BEFORE the PR merges — after Phase 09
   has drafted the PR but before the engineer clicks merge — so that retro's
   changes are committed on the feature branch and land in main with the PR.
-- Reads all committed artifacts for the branch (from `.djinn/<BRANCH>/` or
+- Reads all committed artifacts for the branch (from `<ARTIFACT_DIR>` or
   `.djinn/.archive/` if archived post-merge).
 
 **`/djinn status`:**
@@ -122,12 +138,12 @@ To check approval status: read `.djinn/<BRANCH>/<file>` and check for
 After writing a phase artifact (not after `/djinn approve` or `/djinn status`):
 
 ```bash
-git add .djinn/<BRANCH>/
+git add <ARTIFACT_DIR>
 git commit -m "chore(djinn): phase 0N complete — <BRANCH>"
 git push
 ```
 
-Stage only `.djinn/<BRANCH>/` — never `git add -A` or `git add .`.
+Stage only `<ARTIFACT_DIR>` — never `git add -A` or `git add .`.
 
 ---
 
@@ -170,7 +186,7 @@ Group 4 — Assumptions:
 
 Once answers are collected, read `templates/01-questions.html`, fill it with
 the engineer's answers, and write the completed artifact to
-`.djinn/<BRANCH>/01-questions.html`.
+`<ARTIFACT_DIR>/01-questions.html`.
 
 ---
 
@@ -186,7 +202,7 @@ reviews it before Design begins.
 
 You are running Phase 02 (Research) of the Djinn loop for branch `<BRANCH>`.
 
-Read `.djinn/<BRANCH>/01-questions.html` to understand the problem and scope.
+Read `<ARTIFACT_DIR>/01-questions.html` to understand the problem and scope.
 Then investigate the codebase to answer:
 
 1. **Relevant files:** Which files, modules, and directories are most relevant
@@ -206,7 +222,7 @@ Then investigate the codebase to answer:
    only be made after seeing the codebase? List them explicitly.
 
 Read `templates/02-research.html`, fill it with your findings, and write the
-completed artifact to `.djinn/<BRANCH>/02-research.html`.
+completed artifact to `<ARTIFACT_DIR>/02-research.html`.
 
 ---
 
@@ -222,7 +238,7 @@ Gate — wait for `/djinn approve` before Phase 04 begins.
 
 You are running Phase 03 (Design) of the Djinn loop for branch `<BRANCH>`.
 
-Read `.djinn/<BRANCH>/01-questions.html` and `.djinn/<BRANCH>/02-research.html`
+Read `<ARTIFACT_DIR>/01-questions.html` and `<ARTIFACT_DIR>/02-research.html`
 before producing anything.
 
 Produce three sections:
@@ -244,7 +260,7 @@ Produce three sections:
 - Identify the riskiest assumption in the approach and how to validate it early
 
 Read `templates/03-design.html`, fill it with these three sections, and write
-the completed artifact to `.djinn/<BRANCH>/03-design.html`.
+the completed artifact to `<ARTIFACT_DIR>/03-design.html`.
 
 ---
 
@@ -277,7 +293,7 @@ Produce two sections:
 - Flag any step that requires coordination with another engineer or system
 
 Read `templates/04-structure.html`, fill it with these two sections, and write
-the completed artifact to `.djinn/<BRANCH>/04-structure.html`.
+the completed artifact to `<ARTIFACT_DIR>/04-structure.html`.
 
 ---
 
@@ -320,7 +336,7 @@ AGENTS.md/CLAUDE.md for project-specific norms.
 boundaries, data integrity rules, things that must never happen.
 
 Read `templates/05-plan.html`, fill it with all seven sections, and write the
-completed artifact to `.djinn/<BRANCH>/05-plan.html`.
+completed artifact to `<ARTIFACT_DIR>/05-plan.html`.
 
 ---
 
@@ -336,7 +352,7 @@ that follows.
 
 You are running Phase 06 (Worktree) of the Djinn loop for branch `<BRANCH>`.
 
-The approved plan is at `.djinn/<BRANCH>/05-plan.html`. Implementation is now
+The approved plan is at `<ARTIFACT_DIR>/05-plan.html`. Implementation is now
 unlocked.
 
 Confirm the worktree is set up:
@@ -365,21 +381,21 @@ file write — no manual gate needed.
 
 You are running Phase 07 (Implement) of the Djinn loop for branch `<BRANCH>`.
 
-Read `.djinn/<BRANCH>/05-plan.html` — the approved plan is your spec. Execute
+Read `<ARTIFACT_DIR>/05-plan.html` — the approved plan is your spec. Execute
 the Operations steps in order.
 
 As you work:
 - Follow the Norms and Safeguards sections of the plan strictly
 - Log every significant decision, deviation from plan, and file change to the
-  implement log artifact (`.djinn/<BRANCH>/06-implement-log.html`)
+  implement log artifact (`<ARTIFACT_DIR>/06-implement-log.html`)
 - If you discover something that contradicts the plan: stop, update
-  `.djinn/<BRANCH>/05-plan.html` first, then continue. Per SPDD governance:
+  `<ARTIFACT_DIR>/05-plan.html` first, then continue. Per SPDD governance:
   fix the artifact before fixing the code.
 - Track token usage and write it to the implement log's djinn-tokens-* meta tags
   periodically
 
 Read `templates/06-implement-log.html`, initialise it with the session start
-time, and write it to `.djinn/<BRANCH>/06-implement-log.html` before writing
+time, and write it to `<ARTIFACT_DIR>/06-implement-log.html` before writing
 any product code. Update it as you work.
 
 ---
@@ -405,7 +421,7 @@ git diff $(git merge-base HEAD origin/HEAD)..HEAD
 ```
 
 Also read:
-- `.djinn/<BRANCH>/05-plan.html` — the approved REASONS Canvas (the spec)
+- `<ARTIFACT_DIR>/05-plan.html` — the approved REASONS Canvas (the spec)
 - The project `CLAUDE.md` / `AGENTS.md` (conventions and norms)
 
 Then spawn a reviewer subagent using the `Agent` tool. Pass the subagent:
@@ -475,7 +491,7 @@ Read `templates/07-review.html`, fill it with:
 - The Findings table (all findings with tag, confidence, file:line)
 - A summary verdict: APPROVED (no blockers) or BLOCKERS PRESENT (n blocking)
 
-Write the completed artifact to `.djinn/<BRANCH>/07-review.html`.
+Write the completed artifact to `<ARTIFACT_DIR>/07-review.html`.
 
 Then present the findings to the engineer and triage via `AskUserQuestion`:
 - Fix blockers now (re-implement, then re-run `/djinn`)
@@ -512,13 +528,13 @@ Generate a PR description that captures:
 - **Artifact links** — links to each phase artifact (relative paths)
 
 Read `templates/08-pr-summary.html`, fill it, and write to
-`.djinn/<BRANCH>/08-pr-summary.html`.
+`<ARTIFACT_DIR>/08-pr-summary.html`.
 
 Then output the PR title and body to the conversation so the engineer can
 copy it directly to GitHub/Gitea, or run:
 
 ```bash
-gh pr create --title "..." --body "$(cat .djinn/<BRANCH>/08-pr-summary.html)"
+gh pr create --title "..." --body "$(cat <ARTIFACT_DIR>/08-pr-summary.html)"
 ```
 
 After pushing, address reviewer comments as they arrive. Return to
@@ -541,7 +557,7 @@ Self-improving — the loop gets better each cycle.
 
 You are running Phase 10 (Retro) of the Djinn loop for branch `<BRANCH>`.
 
-Read all artifacts in `.djinn/<BRANCH>/`.
+Read all artifacts in `<ARTIFACT_DIR>`.
 
 **Section 1 — Loop Health**
 
@@ -619,12 +635,12 @@ The overrides file is organised into per-phase sections (e.g. `## Phase 05 Plan`
 
 Read `templates/09-retro.html`, fill it with all four sections and the
 approved/declined status of each proposal, and write to
-`.djinn/<BRANCH>/09-retro.html`.
+`<ARTIFACT_DIR>/09-retro.html`.
 
 Then auto-commit and push, staging both the retro artifact and the overrides file:
 
 ```bash
-git add .djinn/<BRANCH>/ .djinn/overrides.md
+git add <ARTIFACT_DIR> .djinn/overrides.md
 git commit -m "chore(djinn): retro complete — <BRANCH>"
 git push
 ```
