@@ -66,9 +66,10 @@ RETRO GATE:
   08-pr-summary.html exists, 09-retro.html does not exist
   → Run Phase 10 (Retro) before merging the PR.
 
-LOOP COMPLETE:
+LOOP COMPLETE (hard stop):
   09-retro.html exists
-  → The loop for this branch is complete. Merge the PR.
+  → ⛔ One loop per branch. This branch already has a complete Djinn loop.
+    Show all artifact paths and stop. Do NOT re-initialize.
     To start a new loop, create a new branch.
 
 AWAITING APPROVAL (gate phases — /djinn with no subcommand shows status):
